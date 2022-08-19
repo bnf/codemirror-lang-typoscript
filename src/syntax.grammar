@@ -23,4 +23,85 @@ expression {
   "(" ")"
 }
 
+
+
+
+
+
+
+
+
+
+value { True | False | Null | Number | String | Object | Array }
+
+String { string }
+Object { "{" list<Property>? "}" }
+Array  { "[" list<value>? "]" }
+
+IncludeStatement { "<INCLUDE_TYPOSCRIPT:" (Attribute space*)* ">" }
+
+ImportStatement {
+  @specialize[@name=import]<AtKeyword, "@import"> StringLiteral
+}
+
+Attribute {
+  AttributeName space* Is space* AttributeValue
+}
+
+AttributeValue { "\"" attributeContent* "\"" }
+
+
+Property { PropertyName ":" value }
+PropertyName { string }
+
+
+@tokens {
+  True  { "true" }
+  False { "false" }
+  Null  { "null" }
+
+  Number { '-'? int frac? exp?  }
+  int  { '0' | $[1-9] @digit* }
+  frac { '.' @digit+ }
+  exp  { $[eE] $[+\-]? @digit+ }
+
+  string { '"' char* '"' }
+  char { $[\u{20}\u{21}\u{23}-\u{5b}\u{5d}-\u{10ffff}] | "\\" esc }
+  esc  { $["\\\/bfnrt] | "u" hex hex hex hex }
+  hex  { $[0-9a-fA-F] }
+
+  whitespace { $[ \n\r\t] }
+
+  "{" "}" "[" "]"
+
+  nameStart {
+    ":" | @asciiLetter | "_" |
+    $[\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D] |
+    $[\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\u{10000}-\u{EFFFF}]
+  }
+
+  nameChar {
+    nameStart | "-" | "." | @digit | $[\u00B7\u0300-\u036F\u203F-\u2040]
+  }
+
+  identifier { nameStart nameChar* }
+
+  AttributeName { identifier }
+
+  attributeContent { !["&]+ }
+
+  Is { "=" }
+
+  StringLiteral { "\"" (!["\n\\] | "\\" _)* "\"" | "'" (!['\n\\] | "\\" _)* "'" }
+
+}
+
+@skip { whitespace }
+list<item> { item ("," item)* }
+
+@external propSource jsonHighlighting from "./highlight"
+
+
+
+
 @detectDelim
